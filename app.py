@@ -4,41 +4,40 @@ from typing import List, Optional
 
 app = FastAPI()
 
+Meus_Livros = {}
 
-class Task(BaseModel):
+class Livro(BaseModel):
     nome: str
-    descricao: str
-    concluida: bool = False
+    autor: str
+    ano_livro: int
 
+@app.post("/Adiciona/")  # Remova response_model=Livro
+def post_livro(livro: Livro):
+    if livro.nome in Meus_Livros:
+        raise HTTPException(status_code=400, detail="Livro já cadastrado")
+    else:  
+        Meus_Livros[livro.nome] = livro.dict()
+        return {"message": "Livro adicionado com sucesso", "livro": livro.dict()}
 
-tasks: List[Task] = []
+@app.get("/livros")
+def get_livro():
+    if not Meus_Livros:
+        return {"message": "Nenhum livro cadastrado"}
+    else:
+        return {"livros": list(Meus_Livros.values())}
+    
+@app.put("/atualiza/{nome_livro}")
+def put_livro(nome_livro: str, livro: Livro):
+    if nome_livro not in Meus_Livros:
+        raise HTTPException(status_code=404, detail="Livro não encontrado")
+    else:
+        Meus_Livros[nome_livro] = livro.dict()
+        return {"message": "Livro atualizado com sucesso", "livro": livro.dict()}
 
-
-@app.post("/tasks/", response_model=Task)
-def add_task(task: Task):
-    tasks.append(task)
-    return task
-
-
-@app.get("/tasks/", response_model=List[Task])
-def list_tasks():
-    return tasks
-
-
-@app.put("/tasks/{task_nome}", response_model=Task)
-def complete_task(task_nome: str):
-    for task in tasks:
-        if task.nome == task_nome:
-            task.concluida = True
-            return task
-    raise HTTPException(status_code=404, detail="Tarefa não encontrada")
-
-
-@app.delete("/tasks/{task_nome}", response_model=Task)
-def delete_task(task_nome: str):
-    for index, task in enumerate(tasks):
-        if task.nome == task_nome:
-            return tasks.pop(index)
-    raise HTTPException(status_code=404, detail="Tarefa não encontrada")
-
+@app.delete("/livros/{nome_livro}")
+def delete_livro(nome_livro: str):
+    if nome_livro not in Meus_Livros:
+        raise HTTPException(status_code=404, detail="Livro não encontrado")
+    livro = Meus_Livros.pop(nome_livro)
+    return {"message": "Livro removido com sucesso", "livro": livro}
 
