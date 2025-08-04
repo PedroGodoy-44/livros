@@ -2,42 +2,46 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 
-app = FastAPI()
+app = FastAPI(
+    title="API de Tarefas",
+    description="API para gerenciar tarefas",
+    version="1.0.0",
+    contact={
+        "name": "Pedro Godoy",
+        "email":"pedrohenriquegoodoy@gmail.com"}
+)
 
-Meus_Livros = {}
+Minhas_Tarefas = {}
 
-class Livro(BaseModel):
+class Tarefa(BaseModel):
     nome: str
-    autor: str
-    ano_livro: int
+    descricao: str
+    concluida: bool = False
 
-@app.post("/Adiciona/")  # Remova response_model=Livro
-def post_livro(livro: Livro):
-    if livro.nome in Meus_Livros:
-        raise HTTPException(status_code=400, detail="Livro já cadastrado")
-    else:  
-        Meus_Livros[livro.nome] = livro.dict()
-        return {"message": "Livro adicionado com sucesso", "livro": livro.dict()}
+@app.post("/tarefas/")
+def criar_tarefa(tarefa: Tarefa):
+    if tarefa.nome in Minhas_Tarefas:
+        raise HTTPException(status_code=400, detail="Tarefa já cadastrada")
+    Minhas_Tarefas[tarefa.nome] = tarefa.dict()
+    return {"message": "Tarefa criada com sucesso", "tarefa": tarefa}
 
-@app.get("/livros")
-def get_livro():
-    if not Meus_Livros:
-        return {"message": "Nenhum livro cadastrado"}
-    else:
-        return {"livros": list(Meus_Livros.values())}
+@app.get("/tarefas")
+def listar_tarefas():
+    if not Minhas_Tarefas:
+        return {"message": "Nenhuma tarefa cadastrada"}
+    return {"tarefas": list(Minhas_Tarefas.values())}
     
-@app.put("/atualiza/{nome_livro}")
-def put_livro(nome_livro: str, livro: Livro):
-    if nome_livro not in Meus_Livros:
-        raise HTTPException(status_code=404, detail="Livro não encontrado")
-    else:
-        Meus_Livros[nome_livro] = livro.dict()
-        return {"message": "Livro atualizado com sucesso", "livro": livro.dict()}
+@app.put("/tarefas/{nome_tarefa}")
+def atualizar_tarefa(nome_tarefa: str, tarefa: Tarefa):
+    if nome_tarefa not in Minhas_Tarefas:
+        raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+    Minhas_Tarefas[nome_tarefa] = tarefa.dict()
+    return {"message": "Tarefa atualizada com sucesso", "tarefa": tarefa}
 
-@app.delete("/livros/{nome_livro}")
-def delete_livro(nome_livro: str):
-    if nome_livro not in Meus_Livros:
-        raise HTTPException(status_code=404, detail="Livro não encontrado")
-    livro = Meus_Livros.pop(nome_livro)
-    return {"message": "Livro removido com sucesso", "livro": livro}
+@app.delete("/tarefas/{nome_tarefa}")
+def deletar_tarefa(nome_tarefa: str):
+    if nome_tarefa not in Minhas_Tarefas:
+        raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+    tarefa = Minhas_Tarefas.pop(nome_tarefa)
+    return {"message": "Tarefa removida com sucesso", "tarefa": tarefa}
 
